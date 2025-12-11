@@ -8,11 +8,20 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d
       - ./deploy/certs:/etc/letsencrypt
       - espocrm-data:/var/www/html
+    command: /bin/sh -c 'envsubst ''$$DOMAIN'' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf && nginx -g "daemon off;"'
     depends_on:
       - espocrm
+
+  cert-renewal:
+    image: certbot/certbot
+    container_name: espocrm-cert-renewal
+    volumes:
+      - ./deploy/certs:/etc/letsencrypt
+      - espocrm-data:/var/www/html
+    command: renew --quiet --post-hook "docker kill --signal=HUP espocrm-nginx"
 
   certbot:
     image: certbot/certbot
@@ -20,7 +29,7 @@ services:
     volumes:
       - ./deploy/certs:/etc/letsencrypt
       - espocrm-data:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email your-email@example.com --agree-tos --no-eff-email -d crm.your-domain.com
+    command: certonly --webroot --webroot-path=/var/www/html --email $${EMAIL} --agree-tos --no-eff-email -d $${DOMAIN}
 
   espocrm:
     image: espocrm/espocrm:8.1
@@ -35,7 +44,7 @@ services:
       ESPOCRM_DATABASE_NAME: ${POSTGRES_DB}
       ESPOCRM_ADMIN_USERNAME: ${ESPO_ADMIN_USERNAME}
       ESPOCRM_ADMIN_PASSWORD: ${ESPO_ADMIN_PASSWORD}
-      ESPOCRM_SITE_URL: https://crm.your-domain.com
+      ESPOCRM_SITE_URL: ${ESPO_SITE_URL}
       # MinIO integration
       ESPOCRM_FILE_STORAGE: 'Minio'
       ESPOCRM_MINIO_ENDPOINT: 'http://minio:9000'
@@ -45,6 +54,7 @@ services:
       ESPOCRM_MINIO_USE_PATH_STYLE_ENDPOINT: 'true'
     volumes:
       - espocrm-data:/var/www/html
+      - ./espocrm_modules/PropTechEntities:/var/www/html/custom/Espo/Modules/PropTechEntities
     depends_on:
       postgres:
         condition: service_healthy
@@ -84,6 +94,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  espocrm-daemon:
+    image: espocrm/espocrm:8.1
+    container_name: espocrm-daemon-prod
+    restart: unless-stopped
+    volumes:
+      - espocrm-data:/var/www/html
+      - ./espocrm_modules/PropTechEntities:/var/www/html/custom/Espo/Modules/PropTechEntities
+    entrypoint: ["docker-daemon.sh"]
+    depends_on:
+      - espocrm
+
+  espocrm-websocket:
+    image: espocrm/espocrm:8.1
+    container_name: espocrm-websocket-prod
+    restart: unless-stopped
+    volumes:
+      - espocrm-data:/var/www/html
+      - ./espocrm_modules/PropTechEntities:/var/www/html/custom/Espo/Modules/PropTechEntities
+    entrypoint: ["docker-websocket.sh"]
+    depends_on:
+      - espocrm
 
 volumes:
   espocrm-data:

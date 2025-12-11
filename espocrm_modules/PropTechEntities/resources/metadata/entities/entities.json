@@ -1,0 +1,32 @@
+{
+    "Property": {
+        "isVar": true,
+        "label": "Property",
+        "labelPlural": "Properties",
+        "stream": true,
+        "import": true,
+        "user": true,
+        "defaultSortBy": "name",
+        "defaultSortAsc": true
+    },
+    "Project": {
+        "isVar": true,
+        "label": "Project",
+        "labelPlural": "Projects",
+        "stream": true,
+        "import": true,
+        "user": true,
+        "defaultSortBy": "name",
+        "defaultSortAsc": true
+    },
+    "Permit": {
+        "isVar": true,
+        "label": "Permit",
+        "labelPlural": "Permits",
+        "stream": true,
+        "import": true,
+        "user": true,
+        "defaultSortBy": "type",
+        "defaultSortAsc": true
+    }
+}

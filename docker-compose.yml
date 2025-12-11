@@ -55,6 +55,7 @@ services:
       ESPOCRM_SITE_URL: ${ESPO_SITE_URL}
     volumes:
       - espocrm-data:/var/www/html
+      - ./espocrm_modules/PropTechEntities:/var/www/html/custom/Espo/Modules/PropTechEntities
     depends_on:
       mariadb:
         condition: service_healthy

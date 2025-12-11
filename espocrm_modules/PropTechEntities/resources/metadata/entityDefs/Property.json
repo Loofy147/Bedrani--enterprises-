@@ -1,0 +1,45 @@
+{
+    "fields": {
+        "title": {
+            "type": "varchar",
+            "maxLength": 255,
+            "required": true,
+            "audited": true
+        },
+        "description": {
+            "type": "text"
+        },
+        "status": {
+            "type": "enum",
+            "options": ["Available", "Reserved", "Sold", "Under Construction"],
+            "default": "Available",
+            "audited": true
+        },
+        "price": {
+            "type": "currency",
+            "required": true
+        },
+        "areaM2": {
+            "type": "float",
+            "label": "Area (m²)"
+        },
+        "address": {
+            "type": "text"
+        },
+        "geoPoint": {
+            "type": "varchar",
+            "maxLength": 255,
+            "label": "Geolocation (Lat,Lon)"
+        }
+    },
+    "links": {
+        "project": {
+            "type": "belongsTo",
+            "entity": "Project"
+        }
+    },
+    "collection": {
+        "sortBy": "title",
+        "asc": true
+    }
+}

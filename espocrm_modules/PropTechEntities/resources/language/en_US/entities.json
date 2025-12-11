@@ -1,0 +1,42 @@
+{
+    "scopeNames": {
+        "Property": "Property",
+        "Project": "Project",
+        "Permit": "Permit"
+    },
+    "scopeNamesPlural": {
+        "Property": "Properties",
+        "Project": "Projects",
+        "Permit": "Permits"
+    },
+    "fields": {
+        "Property": {
+            "title": "Title",
+            "description": "Description",
+            "status": "Status",
+            "price": "Price",
+            "areaM2": "Area (m²)",
+            "address": "Address",
+            "geoPoint": "Geolocation (Lat,Lon)",
+            "project": "Project"
+        },
+        "Project": {
+            "name": "Name",
+            "status": "Status",
+            "budget": "Budget",
+            "spent": "Amount Spent",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "properties": "Properties",
+            "permits": "Permits"
+        },
+        "Permit": {
+            "type": "Type",
+            "status": "Status",
+            "issueDate": "Issue Date",
+            "expiryDate": "Expiry Date",
+            "governmentRef": "Government Reference",
+            "project": "Project"
+        }
+    }
+}

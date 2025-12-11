@@ -1,0 +1,10 @@
+{
+    "name": "PropTech Entities",
+    "version": "1.0.0",
+    "description": "Adds custom entities for Property, Project, and Permit for the PropTech stack.",
+    "author": "Jules",
+    "php": "8.0",
+    "releaseDate": "2024-10-27",
+    "isSystem": false,
+    "type": "module"
+}

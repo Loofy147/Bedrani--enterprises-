@@ -4,20 +4,19 @@
 # It should be run before the first launch of the production Docker Compose stack.
 
 # --- Configuration ---
-# Your domain name(s) for the certificate. Make sure this matches the
-# server_name in your Nginx configuration.
-DOMAINS=("crm.your-domain.com")
+# Source environment variables
+if [ -f .env ]; then
+    export $(cat .env | sed 's/#.*//g' | xargs)
+fi
 
-# The email address for Let's Encrypt registration and renewal notices.
-EMAIL="your-email@example.com"
+# Use DOMAIN and EMAIL from .env file.
+DOMAINS=("$DOMAIN")
+EMAIL="$EMAIL"
 
 # Path to the Certbot data directory.
 DATA_PATH="./deploy/certs"
 
-# Staging flag (1 for testing, 0 for production).
-# Use the staging environment to avoid hitting Let's Encrypt rate limits
-# during development and testing.
-STAGING=1
+# Staging flag is now sourced from .env file (STAGING=1 for testing, STAGING=0 for production)
 
 # --- Script Logic ---
 

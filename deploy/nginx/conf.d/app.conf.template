@@ -3,7 +3,7 @@
 # Redirect HTTP to HTTPS
 server {
     listen 80;
-    server_name crm.your-domain.com;
+    server_name ${DOMAIN};
 
     # Allow certbot to renew certificates
     location /.well-known/acme-challenge/ {
@@ -19,10 +19,10 @@ server {
 # HTTPS server configuration
 server {
     listen 443 ssl http2;
-    server_name crm.your-domain.com;
+    server_name ${DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/crm.your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/crm.your-domain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
     # Strong SSL security settings from certbot
     include /etc/letsencrypt/options-ssl-nginx.conf;

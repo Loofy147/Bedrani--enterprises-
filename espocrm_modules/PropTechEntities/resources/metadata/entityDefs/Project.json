@@ -1,0 +1,44 @@
+{
+    "fields": {
+        "name": {
+            "type": "varchar",
+            "maxLength": 255,
+            "required": true,
+            "audited": true
+        },
+        "status": {
+            "type": "enum",
+            "options": ["Planning", "In Progress", "On Hold", "Completed", "Cancelled"],
+            "default": "Planning",
+            "audited": true
+        },
+        "budget": {
+            "type": "currency"
+        },
+        "spent": {
+            "type": "currency"
+        },
+        "startDate": {
+            "type": "date"
+        },
+        "endDate": {
+            "type": "date"
+        }
+    },
+    "links": {
+        "properties": {
+            "type": "hasMany",
+            "entity": "Property",
+            "foreign": "project"
+        },
+        "permits": {
+            "type": "hasMany",
+            "entity": "Permit",
+            "foreign": "project"
+        }
+    },
+    "collection": {
+        "sortBy": "name",
+        "asc": true
+    }
+}

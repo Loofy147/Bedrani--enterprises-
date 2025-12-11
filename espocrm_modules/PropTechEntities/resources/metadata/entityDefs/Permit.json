@@ -1,0 +1,37 @@
+{
+    "fields": {
+        "type": {
+            "type": "enum",
+            "options": ["Agrément", "Permis de Construire", "Permis de Lotir", "Permis de Démolir", "Certificat de Conformité"],
+            "required": true,
+            "audited": true
+        },
+        "status": {
+            "type": "enum",
+            "options": ["Draft", "Submitted", "Approved", "Rejected", "Expired"],
+            "default": "Draft",
+            "audited": true
+        },
+        "issueDate": {
+            "type": "date"
+        },
+        "expiryDate": {
+            "type": "date"
+        },
+        "governmentRef": {
+            "type": "varchar",
+            "maxLength": 255,
+            "label": "Government Reference"
+        }
+    },
+    "links": {
+        "project": {
+            "type": "belongsTo",
+            "entity": "Project"
+        }
+    },
+    "collection": {
+        "sortBy": "type",
+        "asc": true
+    }
+}

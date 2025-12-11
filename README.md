@@ -1,5 +1,3 @@
-# EspoCRM Docker Compose Setup
-
 This repository contains Docker Compose configurations for setting up EspoCRM for both local development and production environments.
 
 -   **Local Development:** A simple setup using the base `docker-compose.yml` file for quick local testing.
@@ -37,6 +35,17 @@ docker-compose up -d
 -   **EspoCRM:** [http://localhost:8080](http://localhost:8080)
 -   **Login:** Use the `ESPO_ADMIN_USERNAME` and `ESPO_ADMIN_PASSWORD` from your `.env` file.
 
+#### Installing the Custom Module
+
+After the first launch, you need to install the custom "PropTech Entities" module.
+
+1.  Log into EspoCRM as an administrator.
+2.  Navigate to `Administration` in the top-right menu.
+3.  Go to the `Extensions` section.
+4.  Find **PropTech Entities** in the list and click `Install`.
+
+The system will then install the module, and the new `Properties`, `Projects`, and `Permits` entities will be available in the main navigation bar.
+
 #### Stop
 
 ```bash
@@ -61,21 +70,12 @@ The production setup is designed for a public-facing server and includes:
 
 #### Step 1: Configure Production Settings
 
-Before deploying, update the following files with your actual domain and email address:
+Before deploying, configure your production environment by updating the variables in your `.env` file.
 
-1.  **`.env` file:**
-    -   Set `ESPO_SITE_URL` to your full domain (e.g., `https://crm.your-domain.com`).
-    -   Fill in strong passwords for `POSTGRES_PASSWORD` and `MINIO_ROOT_PASSWORD`.
-
-2.  **`docker-compose.prod.yml`:**
-    -   In the `certbot` service, update the `command` to include your email and domain:
-        `--email your-email@example.com -d crm.your-domain.com`
-
-3.  **`deploy/nginx/conf.d/app.conf`:**
-    -   Replace all instances of `crm.your-domain.com` with your actual domain.
-
-4.  **`deploy/init-letsencrypt.sh`:**
-    -   Update the `DOMAINS` and `EMAIL` variables at the top of the script.
+1.  **`DOMAIN`**: Set this to the public domain you will use (e.g., `crm.your-domain.com`).
+2.  **`EMAIL`**: Provide your email address for SSL certificate registration.
+3.  **`ESPO_SITE_URL`**: Set this to the full HTTPS URL (e.g., `https://crm.your-domain.com`).
+4.  Fill in strong, unique passwords for `POSTGRES_PASSWORD` and `MINIO_ROOT_PASSWORD`.
 
 #### Step 2: Obtain SSL Certificate
 
@@ -102,6 +102,8 @@ docker-compose -f docker-compose.prod.yml up -d
 
 -   **EspoCRM:** `https://crm.your-domain.com`
 -   **MinIO Console:** `http://<your_server_ip>:9001` (Login with `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`)
+
+**Security Note:** The MinIO console (port 9001) is exposed publicly in this configuration. For a real production environment, it is strongly recommended to restrict access to this port using a firewall or by placing it behind the Nginx reverse proxy with authentication.
 
 #### Stopping the Production Stack
 
