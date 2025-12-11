@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.21-alpine
+    container_name: espocrm-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/certs:/etc/letsencrypt
+      - espocrm-data:/var/www/html
+    depends_on:
+      - espocrm
+
+  certbot:
+    image: certbot/certbot
+    container_name: espocrm-certbot
+    volumes:
+      - ./deploy/certs:/etc/letsencrypt
+      - espocrm-data:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --email your-email@example.com --agree-tos --no-eff-email -d crm.your-domain.com
+
+  espocrm:
+    image: espocrm/espocrm:8.1
+    container_name: espocrm-app-prod
+    restart: unless-stopped
+    environment:
+      ESPOCRM_DATABASE_DRIVER: pdo_pgsql
+      ESPOCRM_DATABASE_HOST: postgres
+      ESPOCRM_DATABASE_PORT: 5432
+      ESPOCRM_DATABASE_USER: ${POSTGRES_USER}
+      ESPOCRM_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      ESPOCRM_DATABASE_NAME: ${POSTGRES_DB}
+      ESPOCRM_ADMIN_USERNAME: ${ESPO_ADMIN_USERNAME}
+      ESPOCRM_ADMIN_PASSWORD: ${ESPO_ADMIN_PASSWORD}
+      ESPOCRM_SITE_URL: https://crm.your-domain.com
+      # MinIO integration
+      ESPOCRM_FILE_STORAGE: 'Minio'
+      ESPOCRM_MINIO_ENDPOINT: 'http://minio:9000'
+      ESPOCRM_MINIO_KEY: '${MINIO_ROOT_USER}'
+      ESPOCRM_MINIO_SECRET: '${MINIO_ROOT_PASSWORD}'
+      ESPOCRM_MINIO_BUCKET: 'espocrm'
+      ESPOCRM_MINIO_USE_PATH_STYLE_ENDPOINT: 'true'
+    volumes:
+      - espocrm-data:/var/www/html
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  postgres:
+    image: postgis/postgis:14-3.3
+    container_name: espocrm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: espocrm-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  espocrm-data:
+  postgres-data:
+  minio-data:

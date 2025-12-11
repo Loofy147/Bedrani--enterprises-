@@ -1,69 +1,112 @@
 # EspoCRM Docker Compose Setup
 
-This directory contains a `docker-compose.yml` file to quickly set up a local instance of EspoCRM, a powerful open-source CRM application.
+This repository contains Docker Compose configurations for setting up EspoCRM for both local development and production environments.
+
+-   **Local Development:** A simple setup using the base `docker-compose.yml` file for quick local testing.
+-   **Production:** A robust, secure setup using `docker-compose.prod.yml` which includes a reverse proxy (Nginx), SSL certificate management (Certbot), a PostGIS database, and an S3-compatible file store (MinIO).
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed on your system:
-
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+-   [Docker](https://docs.docker.com/get-docker/)
+-   [Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Getting Started
 
-Follow these steps to configure and launch your EspoCRM instance:
-
 ### 1. Configure Environment Variables
 
-First, create a `.env` file by copying the provided example file. This file will store your sensitive credentials and configuration settings.
+Create a `.env` file by copying the provided example. This file stores credentials and configuration for both environments.
 
 ```bash
 cp .env.example .env
 ```
 
-Next, open the `.env` file in a text editor and replace the placeholder values with your own secure credentials for the database and EspoCRM admin user.
+Open `.env` in a text editor and fill in the required values.
 
-```
-# .env
+### 2. Local Development Setup
 
-# MariaDB settings
-MYSQL_ROOT_PASSWORD=your_secure_root_password
-MYSQL_DATABASE=espocrm
-MYSQL_USER=espocrm_user
-MYSQL_PASSWORD=your_secure_user_password
+For local development, the setup uses a MariaDB database and exposes the application on port 8080.
 
-# EspoCRM settings
-ESPO_ADMIN_USERNAME=admin
-ESPO_ADMIN_PASSWORD=your_secure_admin_password
-ESPO_SITE_URL=http://localhost:8080
-```
-
-**Note:** Do not commit the `.env` file to version control if it contains sensitive information.
-
-### 2. Launch the Application
-
-Once you have configured your `.env` file, you can start the EspoCRM application using Docker Compose. Run the following command in your terminal from the same directory as the `docker-compose.yml` file:
+#### Launch
 
 ```bash
 docker-compose up -d
 ```
 
-This command will download the necessary Docker images and start the EspoCRM application and its database in the background (`-d` flag).
+#### Access
 
-### 3. Access EspoCRM
+-   **EspoCRM:** [http://localhost:8080](http://localhost:8080)
+-   **Login:** Use the `ESPO_ADMIN_USERNAME` and `ESPO_ADMIN_PASSWORD` from your `.env` file.
 
-After the containers have started, you can access your EspoCRM instance by opening your web browser and navigating to the `ESPO_SITE_URL` you configured in your `.env` file. By default, this is:
-
-[http://localhost:8080](http://localhost:8080)
-
-You can log in with the admin username and password you set in the `.env` file.
-
-### 4. Stopping the Application
-
-To stop the EspoCRM application and its containers, run the following command:
+#### Stop
 
 ```bash
 docker-compose down
 ```
 
-This will stop and remove the containers. The data stored in the database will be preserved in a Docker volume, so you can start the application again with `docker-compose up -d` without losing your data.
+---
+
+### 3. Production Deployment
+
+The production setup is designed for a public-facing server and includes:
+
+-   **Nginx:** Reverse proxy to handle incoming traffic.
+-   **Certbot:** Automated SSL certificate generation and renewal with Let's Encrypt for HTTPS.
+-   **PostgreSQL + PostGIS:** A more powerful database with spatial data support.
+-   **MinIO:** An S3-compatible object storage for robust file management.
+
+#### Prerequisites for Production
+
+-   A server with a public IP address.
+-   A registered domain name (e.g., `your-domain.com`) with a DNS A record pointing to your server's IP (e.g., `crm.your-domain.com -> YOUR_SERVER_IP`).
+
+#### Step 1: Configure Production Settings
+
+Before deploying, update the following files with your actual domain and email address:
+
+1.  **`.env` file:**
+    -   Set `ESPO_SITE_URL` to your full domain (e.g., `https://crm.your-domain.com`).
+    -   Fill in strong passwords for `POSTGRES_PASSWORD` and `MINIO_ROOT_PASSWORD`.
+
+2.  **`docker-compose.prod.yml`:**
+    -   In the `certbot` service, update the `command` to include your email and domain:
+        `--email your-email@example.com -d crm.your-domain.com`
+
+3.  **`deploy/nginx/conf.d/app.conf`:**
+    -   Replace all instances of `crm.your-domain.com` with your actual domain.
+
+4.  **`deploy/init-letsencrypt.sh`:**
+    -   Update the `DOMAINS` and `EMAIL` variables at the top of the script.
+
+#### Step 2: Obtain SSL Certificate
+
+This step provisions the initial SSL certificate required by Nginx.
+
+```bash
+bash deploy/init-letsencrypt.sh
+```
+
+This script will:
+1.  Temporarily start Nginx with a dummy certificate.
+2.  Use Certbot to request a real certificate from Let's Encrypt.
+3.  Reload Nginx with the new certificate.
+
+#### Step 3: Launch Production Stack
+
+Now you can launch the full production stack.
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Access Production Services
+
+-   **EspoCRM:** `https://crm.your-domain.com`
+-   **MinIO Console:** `http://<your_server_ip>:9001` (Login with `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`)
+
+#### Stopping the Production Stack
+
+```bash
+docker-compose -f docker-compose.prod.yml down
+```
+
+The data for all services is stored in Docker volumes, so it will be preserved.
