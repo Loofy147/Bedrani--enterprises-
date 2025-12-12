@@ -1,84 +1,34 @@
-# EspoCRM Docker Compose configuration
-#
-# This file sets up a complete EspoCRM environment with the following services:
-# - mariadb: The MariaDB database server for storing EspoCRM data.
-# - espocrm: The main EspoCRM application container.
-# - espocrm-daemon: A container for running EspoCRM background jobs.
-# - espocrm-websocket: A container for WebSocket server enabling real-time communication.
-#
-# Before running `docker-compose up`, create a `.env` file in the same directory
-# with the following content, replacing the placeholder values with your own secure credentials:
-#
-# MYSQL_ROOT_PASSWORD=your_secure_root_password
-# MYSQL_DATABASE=espocrm
-# MYSQL_USER=espocrm_user
-# MYSQL_PASSWORD=your_secure_user_password
-#
-# ESPO_ADMIN_USERNAME=admin
-# ESPO_ADMIN_PASSWORD=your_secure_admin_password
-# ESPO_SITE_URL=http://localhost:8080
-#
-
 version: '3.8'
 
 services:
-  mariadb:
-    image: mariadb:10.11
-    container_name: espocrm-mariadb
-    restart: unless-stopped
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: proptech_db_dev
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-proptech_db}
+      POSTGRES_USER: ${POSTGRES_USER:-proptech_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-proptech_pass}
+    ports:
+      - "5432:5432"
     volumes:
-      - mariadb-data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data_dev:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  espocrm:
-    image: espocrm/espocrm:8.1
-    container_name: espocrm-app
-    restart: unless-stopped
+  api:
+    image: alpine:latest
+    container_name: proptech_api_dev
+    command: tail -f /dev/null # Keep container running
     ports:
-      - "8080:80"
-    environment:
-      ESPOCRM_DATABASE_HOST: mariadb
-      ESPOCRM_DATABASE_USER: ${MYSQL_USER}
-      ESPOCRM_DATABASE_PASSWORD: ${MYSQL_PASSWORD}
-      ESPOCRM_DATABASE_NAME: ${MYSQL_DATABASE}
-      ESPOCRM_ADMIN_USERNAME: ${ESPO_ADMIN_USERNAME}
-      ESPOCRM_ADMIN_PASSWORD: ${ESPO_ADMIN_PASSWORD}
-      ESPOCRM_SITE_URL: ${ESPO_SITE_URL}
-    volumes:
-      - espocrm-data:/var/www/html
+      - "8000:8000"
     depends_on:
-      mariadb:
+      db:
         condition: service_healthy
 
-  espocrm-daemon:
-    image: espocrm/espocrm:8.1
-    container_name: espocrm-daemon
-    restart: unless-stopped
-    volumes:
-      - espocrm-data:/var/www/html
-    entrypoint: ["docker-daemon.sh"]
-    depends_on:
-      - espocrm
-
-  espocrm-websocket:
-    image: espocrm/espocrm:8.1
-    container_name: espocrm-websocket
-    restart: unless-stopped
-    volumes:
-      - espocrm-data:/var/www/html
-    entrypoint: ["docker-websocket.sh"]
-    depends_on:
-      - espocrm
-
 volumes:
-  mariadb-data:
-  espocrm-data:
+  postgres_data_dev:
