@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik_prod
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik Dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "traefik_letsencrypt:/letsencrypt"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USERS}"
+
+  frontend_maamur:
+    image: alpine:latest
+    container_name: frontend_maamur_prod
+    command: tail -f /dev/null
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.maamur.rule=Host(`${DOMAIN_MAAMUR}`)"
+      - "traefik.http.routers.maamur.entrypoints=websecure"
+      - "traefik.http.routers.maamur.tls.certresolver=myresolver"
+      - "traefik.http.services.maamur.loadbalancer.server.port=3000"
+    restart: unless-stopped
+
+  frontend_djelali:
+    image: alpine:latest
+    container_name: frontend_djelali_prod
+    command: tail -f /dev/null
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.djelali.rule=Host(`${DOMAIN_DJELALI}`)"
+      - "traefik.http.routers.djelali.entrypoints=websecure"
+      - "traefik.http.routers.djelali.tls.certresolver=myresolver"
+      - "traefik.http.services.djelali.loadbalancer.server.port=3000"
+    restart: unless-stopped
+
+  api:
+    image: alpine:latest
+    container_name: proptech_api_prod
+    command: tail -f /dev/null
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN}`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=myresolver"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: proptech_db_prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-proptech_db}
+      POSTGRES_USER: ${POSTGRES_USER:-proptech_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-proptech_pass}
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data_prod:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prod:
+  traefik_letsencrypt:
