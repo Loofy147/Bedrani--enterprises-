@@ -1,69 +1,58 @@
-# EspoCRM Docker Compose Setup
+# PropTech Platform
 
-This directory contains a `docker-compose.yml` file to quickly set up a local instance of EspoCRM, a powerful open-source CRM application.
+This repository contains the source code for a multi-tenant PropTech platform.
 
-## Prerequisites
+## Architecture
 
-Before you begin, ensure you have the following installed on your system:
+The platform is built on a microservices architecture and orchestrated using Docker Compose. The main components are:
+
+- **Backend API:** A Python-based API built with FastAPI.
+- **Frontend Applications:** Multiple frontend applications built with Next.js and TypeScript, one for each tenant (e.g., "Maamur", "Djelali").
+- **Database:** A PostgreSQL database with the PostGIS extension for geospatial data.
+- **Reverse Proxy:** Traefik is used as a reverse proxy in the production environment to manage routing and SSL certificates.
+
+## Development Setup
+
+### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Getting Started
+### Getting Started
 
-Follow these steps to configure and launch your EspoCRM instance:
+1.  **Configure Backend Environment Variables:**
 
-### 1. Configure Environment Variables
+    Create a `.env` file in the root directory by copying the example file:
 
-First, create a `.env` file by copying the provided example file. This file will store your sensitive credentials and configuration settings.
+    ```bash
+    cp .env.example .env
+    ```
 
-```bash
-cp .env.example .env
-```
+    Update the `.env` file with your desired database credentials.
 
-Next, open the `.env` file in a text editor and replace the placeholder values with your own secure credentials for the database and EspoCRM admin user.
+2.  **Configure Frontend Environment Variables:**
 
-```
-# .env
+    Create a `.env.local` file in the `frontend-djelali` directory:
 
-# MariaDB settings
-MYSQL_ROOT_PASSWORD=your_secure_root_password
-MYSQL_DATABASE=espocrm
-MYSQL_USER=espocrm_user
-MYSQL_PASSWORD=your_secure_user_password
+    ```bash
+    touch frontend-djelali/.env.local
+    ```
 
-# EspoCRM settings
-ESPO_ADMIN_USERNAME=admin
-ESPO_ADMIN_PASSWORD=your_secure_admin_password
-ESPO_SITE_URL=http://localhost:8080
-```
+    Add the following line to the file, pointing to the API's URL:
 
-**Note:** Do not commit the `.env` file to version control if it contains sensitive information.
+    ```
+    NEXT_PUBLIC_API_URL=http://localhost:8000
+    ```
 
-### 2. Launch the Application
+3.  **Launch the Application:**
 
-Once you have configured your `.env` file, you can start the EspoCRM application using Docker Compose. Run the following command in your terminal from the same directory as the `docker-compose.yml` file:
+    Start the development environment using Docker Compose:
 
-```bash
-docker-compose up -d
-```
+    ```bash
+    docker-compose up -d --build
+    ```
 
-This command will download the necessary Docker images and start the EspoCRM application and its database in the background (`-d` flag).
+4.  **Access the Services:**
 
-### 3. Access EspoCRM
-
-After the containers have started, you can access your EspoCRM instance by opening your web browser and navigating to the `ESPO_SITE_URL` you configured in your `.env` file. By default, this is:
-
-[http://localhost:8080](http://localhost:8080)
-
-You can log in with the admin username and password you set in the `.env` file.
-
-### 4. Stopping the Application
-
-To stop the EspoCRM application and its containers, run the following command:
-
-```bash
-docker-compose down
-```
-
-This will stop and remove the containers. The data stored in the database will be preserved in a Docker volume, so you can start the application again with `docker-compose up -d` without losing your data.
+    -   **`frontend-djelali`:** [http://localhost:3000](http://localhost:3000)
+    -   **API:** [http://localhost:8000](http://localhost:8000)
