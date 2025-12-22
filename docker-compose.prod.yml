@@ -55,9 +55,9 @@ services:
     restart: unless-stopped
 
   api:
-    image: alpine:latest
+    build:
+      context: ./api
     container_name: proptech_api_prod
-    command: tail -f /dev/null
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN}`)"

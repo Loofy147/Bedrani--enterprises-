@@ -21,14 +21,23 @@ services:
       retries: 5
 
   api:
-    image: alpine:latest
+    build:
+      context: ./api
     container_name: proptech_api_dev
-    command: tail -f /dev/null # Keep container running
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+
+  frontend-djelali:
+    build:
+      context: ./frontend-djelali
+    container_name: frontend_djelali_dev
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
 
 volumes:
   postgres_data_dev:
